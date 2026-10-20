@@ -28,3 +28,32 @@ Eine moderne und mobile-optimierte **Streamlit-Web-App**, die mithilfe von KI (G
    ```bash
    git clone [https://github.com/DEIN-BENUTZERNAME/streamlit-ebay-scanner.git](https://github.com/DEIN-BENUTZERNAME/streamlit-ebay-scanner.git)
    cd streamlit-ebay-scanner
+
+
+Abhängigkeiten installieren:
+    Bash
+
+    pip install -r requirements.txt
+
+    Secrets einrichten:
+    Erstelle im Hauptverzeichnis einen Ordner namens .streamlit und darin eine Datei secrets.toml:
+    Ini, TOML
+
+    GROQ_API_KEY = "dein-groq-api-key-hier"
+
+    App starten:
+    Bash
+
+    streamlit run app.py
+
+☁️ Deployment (Streamlit Community Cloud)
+
+    Lade dieses Repository auf GitHub hoch (Achtung: .streamlit/secrets.toml und sensible API-Keys dürfen nicht öffentlich hochgeladen werden!).
+
+    Gehe auf share.streamlit.io und melde dich an[cite: 1].
+
+    Klicke auf New app, wähle dein Repository und als Hauptdatei app.py aus[cite: 1, 2].
+
+    Trage deinen GROQ_API_KEY unter den Advanced settings / Secrets ein[cite: 1].
+
+    Klicke auf Deploy! – Fertig[cite: 1].
