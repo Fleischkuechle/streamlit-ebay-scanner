@@ -6,8 +6,6 @@ import io
 import base64
 import urllib.parse
 import re
-import json
-import os
 from datetime import datetime
 
 # ==========================================
@@ -18,9 +16,14 @@ if "GROQ_API_KEY" not in st.secrets:
     st.stop()
 
 GROQ_API_KEY = st.secrets["GROQ_API_KEY"].strip()
-HISTORY_FILE = "history.json"
 
 st.set_page_config(page_title="PriceBot Scanner", page_icon="🔍", layout="centered")
+
+# ==========================================
+# SESSION-STATE INITIALISIERUNG (Privater Verlauf pro Nutzer)
+# ==========================================
+if "history" not in st.session_state:
+    st.session_state["history"] = []
 
 # ==========================================
 # MOBILE-FIRST STYLING (CSS)
@@ -93,18 +96,8 @@ st.markdown(
 
 
 # ==========================================
-# HISTORIE-VERWALTUNG
+# LOKALE HISTORIE-FUNKTIONEN (Nur im Browser/Session)
 # ==========================================
-def load_history():
-    if os.path.exists(HISTORY_FILE):
-        try:
-            with open(HISTORY_FILE, "r", encoding="utf-8") as f:
-                return json.load(f)
-        except Exception:
-            return []
-    return []
-
-
 def create_thumbnail_b64(raw_bytes, max_dim=240) -> str:
     try:
         img = Image.open(io.BytesIO(raw_bytes))
@@ -120,7 +113,7 @@ def create_thumbnail_b64(raw_bytes, max_dim=240) -> str:
 
 
 def add_to_history(query, url, thumb_b64=""):
-    history = load_history()
+    history = st.session_state["history"]
     if history and history[0].get("query") == query:
         return
     new_entry = {
@@ -130,33 +123,15 @@ def add_to_history(query, url, thumb_b64=""):
         "thumb": thumb_b64,
     }
     history.insert(0, new_entry)
-    try:
-        with open(HISTORY_FILE, "w", encoding="utf-8") as f:
-            json.dump(history, f, ensure_ascii=False, indent=2)
-    except Exception:
-        pass
 
 
-def delete_history_item(query, timestamp):
-    history = load_history()
-    history = [
-        h
-        for h in history
-        if not (h.get("query") == query and h.get("time") == timestamp)
-    ]
-    try:
-        with open(HISTORY_FILE, "w", encoding="utf-8") as f:
-            json.dump(history, f, ensure_ascii=False, indent=2)
-    except Exception:
-        pass
+def delete_history_item(index):
+    if 0 <= index < len(st.session_state["history"]):
+        st.session_state["history"].pop(index)
 
 
 def clear_entire_history():
-    try:
-        with open(HISTORY_FILE, "w", encoding="utf-8") as f:
-            json.dump([], f)
-    except Exception:
-        pass
+    st.session_state["history"] = []
 
 
 # ==========================================
@@ -308,14 +283,14 @@ if img_file:
         components.html(copy_buttons_html, height=52)
 
 # ==========================================
-# VISUELLER VERLAUF (Öffnet ebenfalls die App)
+# VISUELLER VERLAUF (Nur für diesen Nutzer)
 # ==========================================
 st.markdown(
     "<h4 style='margin-top: 15px; margin-bottom: 10px;'>📜 Bisher gescannt</h4>",
     unsafe_allow_html=True,
 )
 
-all_history = load_history()
+all_history = st.session_state["history"]
 
 if all_history:
     if "show_all_history" not in st.session_state:
@@ -351,7 +326,7 @@ if all_history:
                 unsafe_allow_html=True,
             )
             if st.button("🗑️ Löschen", key=f"del_{i}", use_container_width=True):
-                delete_history_item(item["query"], item.get("time", ""))
+                delete_history_item(i)
                 st.rerun()
 
         with col2:
@@ -377,7 +352,7 @@ if all_history:
                     unsafe_allow_html=True,
                 )
                 if st.button("🗑️ Löschen", key=f"del_{i+1}", use_container_width=True):
-                    delete_history_item(item_r["query"], item_r.get("time", ""))
+                    delete_history_item(i + 1)
                     st.rerun()
 
     st.write("")
